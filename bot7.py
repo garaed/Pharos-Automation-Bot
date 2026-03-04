@@ -12,10 +12,15 @@ wib = pytz.timezone('Asia/Jakarta')
 
 class Zenith:
     def __init__(self) -> None:
-        self.RPC_URL = "https://testnet.dplabs-internal.com/"
-        self.WPHRS_CONTRACT_ADDRESS = "0x76aaaDA469D23216bE5f7C596fA25F282Ff9b364"
-        self.USDC_CONTRACT_ADDRESS = "0x72df0bcd7276f2dFbAc900D1CE63c272C4BCcCED"
-        self.USDT_CONTRACT_ADDRESS = "0xD4071393f8716661958F766DF660033b3d35fD29"
+        # ✅ FIXED: Updated to Atlantic testnet RPC
+        self.RPC_URL = "https://atlantic.dplabs-internal.com"
+        # ✅ FIXED: Updated to Atlantic testnet contract addresses
+        self.WPHRS_CONTRACT_ADDRESS = "0x838800b758277CC111B2d48Ab01e5E164f8E9471"
+        self.USDC_CONTRACT_ADDRESS = "0xE0BE08c77f415F577A1B3A9aD7a1Df1479564ec8"
+        self.USDT_CONTRACT_ADDRESS = "0xE7E84B8B4f39C507499c40B4ac199B050e2882d5"
+        # ⚠️ TODO: Verify these router addresses on Atlantic explorer
+        # How to verify: do one manual swap on testnet.zenithswap.xyz
+        # Check the tx on atlantic.pharosscan.xyz — "To" address = SWAP_ROUTER_ADDRESS
         self.SWAP_ROUTER_ADDRESS = "0x1A4DE519154Ae51200b0Ad7c90F7faC75547888a"
         self.POSITION_ROUTER_ADDRESS = "0xF8a1D4FF0f9b9Af7CE58E1fc1833688F3BFd6115"
         self.QUOTER_ROUTER_ADDRESS = "0x00f2f47d1ed593Cf0AF0074173E9DF95afb0206C"
@@ -129,7 +134,7 @@ class Zenith:
         )
 
     def welcome(self, project_name="Zenith Swap"):
-        border = "═" * 58  # Solid elite border
+        border = "═" * 58
         print(Fore.LIGHTBLUE_EX + Style.BRIGHT + border)
         print(Fore.LIGHTYELLOW_EX + Style.BRIGHT + "    👑 YetiDAO PRIME Automation BOT 👑")
         print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + "    ─────────────────────────────────────")
@@ -140,7 +145,6 @@ class Zenith:
         print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + "    ─────────────────────────────────────")
         print(Fore.LIGHTYELLOW_EX + Style.BRIGHT + "    💎 Powered by Cryptodai3 × YetiDAO | Prime Engine v1.0 ⚙️")
         print(Fore.LIGHTBLUE_EX + Style.BRIGHT + border)
-
 
     def format_seconds(self, seconds):
         hours, remainder = divmod(seconds, 3600)
@@ -216,7 +220,6 @@ class Zenith:
         try:
             account = Account.from_key(account)
             address = account.address
-            
             return address
         except Exception as e:
             self.log(
@@ -439,11 +442,8 @@ class Zenith:
     async def get_amount_out_min(self, address: str, path: str, amount_in_wei: int, use_proxy: bool):
         try:
             web3 = await self.get_web3_with_check(address, use_proxy)
-
             contract = web3.eth.contract(address=web3.to_checksum_address(self.QUOTER_ROUTER_ADDRESS), abi=self.QUOTER_CONTRACT_ABI)
-
             amount_out = contract.functions.quoteExactInput(path, amount_in_wei).call()
-            
             return amount_out
         except Exception as e:
             return None
@@ -477,24 +477,13 @@ class Zenith:
                 block_number = receipt.blockNumber
                 self.used_nonce[address] += 1
 
-                explorer = f"https://testnet.pharosscan.xyz/tx/{tx_hash}"
+                # ✅ FIXED: Updated to Atlantic explorer
+                explorer = f"https://atlantic.pharosscan.xyz/tx/{tx_hash}"
                 
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}   Approve  :{Style.RESET_ALL}"
-                    f"{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}"
-                )
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}   Block    :{Style.RESET_ALL}"
-                    f"{Fore.WHITE+Style.BRIGHT} {block_number} {Style.RESET_ALL}"
-                )
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}   Tx Hash  :{Style.RESET_ALL}"
-                    f"{Fore.WHITE+Style.BRIGHT} {tx_hash} {Style.RESET_ALL}"
-                )
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}   Explorer :{Style.RESET_ALL}"
-                    f"{Fore.WHITE+Style.BRIGHT} {explorer} {Style.RESET_ALL}"
-                )
+                self.log(f"{Fore.CYAN+Style.BRIGHT}   Approve  :{Style.RESET_ALL}{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}")
+                self.log(f"{Fore.CYAN+Style.BRIGHT}   Block    :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {block_number} {Style.RESET_ALL}")
+                self.log(f"{Fore.CYAN+Style.BRIGHT}   Tx Hash  :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {tx_hash} {Style.RESET_ALL}")
+                self.log(f"{Fore.CYAN+Style.BRIGHT}   Explorer :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {explorer} {Style.RESET_ALL}")
                 await self.print_timer()
 
             return True
@@ -507,17 +496,8 @@ class Zenith:
                 exact_input_single_prefix = bytes.fromhex('04e45aaf')
                 exact_input_single_bytes = encode(
                     ['address', 'address', 'uint24', 'address', 'uint256', 'uint256', 'uint160'],
-                    [
-                        from_token,
-                        to_token,
-                        fee,
-                        address,
-                        amount_in_wei,
-                        amount_out_min_wei,
-                        0
-                    ]
+                    [from_token, to_token, fee, address, amount_in_wei, amount_out_min_wei, 0]
                 )
-            
                 data_bytes = [exact_input_single_prefix + exact_input_single_bytes]
 
             elif swap_type == "erc20 to native":
@@ -525,26 +505,17 @@ class Zenith:
                 exact_input_single_bytes = encode(
                     ['address', 'address', 'uint24', 'address', 'uint256', 'uint256', 'uint160'],
                     [
-                        from_token,
-                        to_token,
-                        fee,
+                        from_token, to_token, fee,
                         "0x0000000000000000000000000000000000000002",
-                        amount_in_wei,
-                        amount_out_min_wei,
-                        0
+                        amount_in_wei, amount_out_min_wei, 0
                     ]
                 )
-
                 unwrap_weth_9_prefix = bytes.fromhex('49404b7c')
                 unwrap_weth_9_bytes = encode(
                     ['uint256', 'address'],
-                    [
-                        amount_out_min_wei,
-                        address
-                    ]
+                    [amount_out_min_wei, address]
                 )
-                
-                data_bytes = [exact_input_single_prefix + exact_input_single_bytes, unwrap_weth_9_prefix +unwrap_weth_9_bytes ]
+                data_bytes = [exact_input_single_prefix + exact_input_single_bytes, unwrap_weth_9_prefix + unwrap_weth_9_bytes]
 
             return data_bytes
         except Exception as e:
@@ -559,10 +530,7 @@ class Zenith:
 
             amount_in_wei = int(amount_in * 10**decimals)
 
-            exceptions = [
-                (self.USDC_CONTRACT_ADDRESS, self.USDT_CONTRACT_ADDRESS)
-            ]
-
+            exceptions = [(self.USDC_CONTRACT_ADDRESS, self.USDT_CONTRACT_ADDRESS)]
             fee = 10000 if (from_token, to_token) in exceptions else 500
 
             if swap_type != "native to erc20":
@@ -575,9 +543,7 @@ class Zenith:
                 raise Exception("Fetch Amount Out Min Failed")
             
             amount_out_min_wei = (amount_out_wei * (10000 - 500)) // 10000
-
             deadline = int(time.time()) + 600
-
             data_bytes = self.generate_multicall_bytes_data(address, swap_type, fee, from_token, to_token, amount_in_wei, amount_out_min_wei)
 
             max_priority_fee = web3.to_wei(1, "gwei")
@@ -586,7 +552,7 @@ class Zenith:
             if swap_type == "native to erc20":
                 token_contract = web3.eth.contract(address=web3.to_checksum_address(self.SWAP_ROUTER_ADDRESS), abi=self.SWAP_CONTRACT_ABI)
                 swap_data = token_contract.functions.multicall(deadline, data_bytes)
-                estimated_gas = swap_data.estimate_gas({"from": address, "value":amount_in_wei})
+                estimated_gas = swap_data.estimate_gas({"from": address, "value": amount_in_wei})
                 swap_tx = swap_data.build_transaction({
                     "from": address,
                     "value": amount_in_wei,
@@ -596,7 +562,6 @@ class Zenith:
                     "nonce": self.used_nonce[address],
                     "chainId": web3.eth.chain_id
                 })
-
             else:
                 token_contract = web3.eth.contract(address=web3.to_checksum_address(self.SWAP_ROUTER_ADDRESS), abi=self.ERC20_CONTRACT_ABI)
                 swap_data = token_contract.functions.multicall(deadline, data_bytes)
@@ -627,29 +592,22 @@ class Zenith:
         try:
             amount0_min = (amount0_desired * (10000 - 500)) // 10000
             amount1_min = (amount1_desired * (10000 - 500)) // 10000
-
             deadline = int(time.time()) + 600
 
             if token_type == "erc20_erc20":
                 calldata = (
-                    token0, token1, 500, -887220, 887220, amount0_desired, 
+                    token0, token1, 500, -887220, 887220, amount0_desired,
                     amount1_desired, amount0_min, amount1_min, address, deadline
                 )
-
             else:
                 mint_prefix = bytes.fromhex("88316456")
                 mint_params = encode(
-                    [
-                        'address', 'address', 'uint24', 'int24', 'int24', 'uint256', 
-                        'uint256', 'uint256', 'uint256', 'address', 'uint256'
-                    ],
-                    [
-                        token0, token1, 500, -887220, 887220, amount0_desired,
-                        amount1_desired, amount0_min, amount1_min, address, deadline
-                    ]
+                    ['address', 'address', 'uint24', 'int24', 'int24', 'uint256',
+                     'uint256', 'uint256', 'uint256', 'address', 'uint256'],
+                    [token0, token1, 500, -887220, 887220, amount0_desired,
+                     amount1_desired, amount0_min, amount1_min, address, deadline]
                 )
                 refund_eth_prefix = bytes.fromhex("12210e8a")
-
                 calldata = [mint_prefix + mint_params, refund_eth_prefix]
 
             return calldata
@@ -662,16 +620,13 @@ class Zenith:
 
             if token_type == "native_erc20":
                 await self.approving_token(account, address, self.POSITION_ROUTER_ADDRESS, token1, amount1_desired, use_proxy)
-            
             elif token_type == "erc20_native":
                 await self.approving_token(account, address, self.POSITION_ROUTER_ADDRESS, token0, amount0_desired, use_proxy)
-            
             elif token_type == "erc20_erc20":
                 await self.approving_token(account, address, self.POSITION_ROUTER_ADDRESS, token0, amount0_desired, use_proxy)
                 await self.approving_token(account, address, self.POSITION_ROUTER_ADDRESS, token1, amount1_desired, use_proxy)
 
             token_contract = web3.eth.contract(address=web3.to_checksum_address(self.POSITION_ROUTER_ADDRESS), abi=self.LIQUIDITY_CONTRACT_ABI)
-
             calldata = self.generate_liquidity_calldata(address, token_type, token0, token1, amount0_desired, amount1_desired)
 
             max_priority_fee = web3.to_wei(1, "gwei")
@@ -679,11 +634,8 @@ class Zenith:
 
             if token_type in ["native_erc20", "erc20_native"]:
                 liquidity_data = token_contract.functions.multicall(calldata)
-
                 value = amount0_desired if token_type == "native_erc20" else amount1_desired
-
-                estimated_gas = liquidity_data.estimate_gas({"from": address, "value":value})
-
+                estimated_gas = liquidity_data.estimate_gas({"from": address, "value": value})
                 liquidity_tx = liquidity_data.build_transaction({
                     "from": address,
                     "value": value,
@@ -693,7 +645,6 @@ class Zenith:
                     "nonce": self.used_nonce[address],
                     "chainId": web3.eth.chain_id
                 })
-
             else:
                 liquidity_data = token_contract.functions.mint(calldata)
                 estimated_gas = liquidity_data.estimate_gas({"from": address})
@@ -718,7 +669,7 @@ class Zenith:
                 f"{Fore.RED+Style.BRIGHT} {str(e)} {Style.RESET_ALL}"
             )
             return None, None
-        
+
     def print_wrap_question(self):
         while True:
             try:
@@ -754,23 +705,21 @@ class Zenith:
 
                 if wrap_option in [1, 2, 3]:
                     wrap_type = (
-                        "Wrap PHRS" if wrap_option == 1 else 
-                        "Unwrap WPHRS" if wrap_option == 2 else 
+                        "Wrap PHRS" if wrap_option == 1 else
+                        "Unwrap WPHRS" if wrap_option == 2 else
                         "Skipped"
                     )
                     print(f"{Fore.GREEN + Style.BRIGHT}{wrap_type} Selected.{Style.RESET_ALL}")
                     self.wrap_option = wrap_option
-
                     if self.wrap_option == 1:
                         self.print_wrap_question()
                     elif self.wrap_option == 2:
                         self.print_unwrap_question()
-
                     break
                 else:
-                    print(f"{Fore.RED + Style.BRIGHT}Please enter either 1 or 2.{Style.RESET_ALL}")
+                    print(f"{Fore.RED + Style.BRIGHT}Please enter either 1, 2, or 3.{Style.RESET_ALL}")
             except ValueError:
-                print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a number (1 or 2).{Style.RESET_ALL}")
+                print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a number (1, 2, or 3).{Style.RESET_ALL}")
 
     def print_swap_question(self):
         while True:
@@ -784,49 +733,17 @@ class Zenith:
             except ValueError:
                 print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a number.{Style.RESET_ALL}")
 
-        while True:
-            try:
-                phrs_swap_amount = float(input(f"{Fore.YELLOW + Style.BRIGHT}Enter PHRS Swap Amount -> {Style.RESET_ALL}").strip())
-                if phrs_swap_amount > 0:
-                    self.phrs_swap_amount = phrs_swap_amount
-                    break
-                else:
-                    print(f"{Fore.RED + Style.BRIGHT}PHRS Swap Amount must be > 0.{Style.RESET_ALL}")
-            except ValueError:
-                print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a float or decimal number.{Style.RESET_ALL}")
-
-        while True:
-            try:
-                wphrs_swap_amount = float(input(f"{Fore.YELLOW + Style.BRIGHT}Enter WPHRS Swap Amount -> {Style.RESET_ALL}").strip())
-                if wphrs_swap_amount > 0:
-                    self.wphrs_swap_amount = wphrs_swap_amount
-                    break
-                else:
-                    print(f"{Fore.RED + Style.BRIGHT}WPHRS Swap Amount must be > 0.{Style.RESET_ALL}")
-            except ValueError:
-                print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a float or decimal number.{Style.RESET_ALL}")
-
-        while True:
-            try:
-                usdc_swap_amount = float(input(f"{Fore.YELLOW + Style.BRIGHT}Enter USDC Swap Amount -> {Style.RESET_ALL}").strip())
-                if usdc_swap_amount > 0:
-                    self.usdc_swap_amount = usdc_swap_amount
-                    break
-                else:
-                    print(f"{Fore.RED + Style.BRIGHT}USDC Swap Amount must be > 0.{Style.RESET_ALL}")
-            except ValueError:
-                print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a float or decimal number.{Style.RESET_ALL}")
-
-        while True:
-            try:
-                usdt_swap_amount = float(input(f"{Fore.YELLOW + Style.BRIGHT}Enter USDT Swap Amount -> {Style.RESET_ALL}").strip())
-                if usdt_swap_amount > 0:
-                    self.usdt_swap_amount = usdt_swap_amount
-                    break
-                else:
-                    print(f"{Fore.RED + Style.BRIGHT}USDT Swap Amount must be > 0.{Style.RESET_ALL}")
-            except ValueError:
-                print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a float or decimal number.{Style.RESET_ALL}")
+        for label, attr in [("PHRS", "phrs_swap_amount"), ("WPHRS", "wphrs_swap_amount"), ("USDC", "usdc_swap_amount"), ("USDT", "usdt_swap_amount")]:
+            while True:
+                try:
+                    val = float(input(f"{Fore.YELLOW + Style.BRIGHT}Enter {label} Swap Amount -> {Style.RESET_ALL}").strip())
+                    if val > 0:
+                        setattr(self, attr, val)
+                        break
+                    else:
+                        print(f"{Fore.RED + Style.BRIGHT}{label} Swap Amount must be > 0.{Style.RESET_ALL}")
+                except ValueError:
+                    print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a float or decimal number.{Style.RESET_ALL}")
 
     def print_liquidity_question(self):
         while True:
@@ -840,38 +757,17 @@ class Zenith:
             except ValueError:
                 print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a number.{Style.RESET_ALL}")
 
-        while True:
-            try:
-                phrs_liquidity_amount = float(input(f"{Fore.YELLOW + Style.BRIGHT}Enter PHRS Liquidity Amount -> {Style.RESET_ALL}").strip())
-                if phrs_liquidity_amount > 0:
-                    self.phrs_liquidity_amount = phrs_liquidity_amount
-                    break
-                else:
-                    print(f"{Fore.RED + Style.BRIGHT}PHRS Liquidity Amount must be > 0.{Style.RESET_ALL}")
-            except ValueError:
-                print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a float or decimal number.{Style.RESET_ALL}")
-
-        while True:
-            try:
-                wphrs_liquidity_amount = float(input(f"{Fore.YELLOW + Style.BRIGHT}Enter WPHRS Liquidity Amount -> {Style.RESET_ALL}").strip())
-                if wphrs_liquidity_amount > 0:
-                    self.wphrs_liquidity_amount = wphrs_liquidity_amount
-                    break
-                else:
-                    print(f"{Fore.RED + Style.BRIGHT}WPHRS Liquidity Amount must be > 0.{Style.RESET_ALL}")
-            except ValueError:
-                print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a float or decimal number.{Style.RESET_ALL}")
-
-        while True:
-            try:
-                usdc_liquidity_amount = float(input(f"{Fore.YELLOW + Style.BRIGHT}Enter USDC Liquidity Amount -> {Style.RESET_ALL}").strip())
-                if usdc_liquidity_amount > 0:
-                    self.usdc_liquidity_amount = usdc_liquidity_amount
-                    break
-                else:
-                    print(f"{Fore.RED + Style.BRIGHT}USDC Liquidity Amount must be > 0.{Style.RESET_ALL}")
-            except ValueError:
-                print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a float or decimal number.{Style.RESET_ALL}")
+        for label, attr in [("PHRS", "phrs_liquidity_amount"), ("WPHRS", "wphrs_liquidity_amount"), ("USDC", "usdc_liquidity_amount")]:
+            while True:
+                try:
+                    val = float(input(f"{Fore.YELLOW + Style.BRIGHT}Enter {label} Liquidity Amount -> {Style.RESET_ALL}").strip())
+                    if val > 0:
+                        setattr(self, attr, val)
+                        break
+                    else:
+                        print(f"{Fore.RED + Style.BRIGHT}{label} Liquidity Amount must be > 0.{Style.RESET_ALL}")
+                except ValueError:
+                    print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a float or decimal number.{Style.RESET_ALL}")
 
     def print_delay_question(self):
         while True:
@@ -888,7 +784,7 @@ class Zenith:
         while True:
             try:
                 max_delay = int(input(f"{Fore.YELLOW + Style.BRIGHT}Max Delay For Each Tx -> {Style.RESET_ALL}").strip())
-                if max_delay >= min_delay:
+                if max_delay >= self.min_delay:
                     self.max_delay = max_delay
                     break
                 else:
@@ -922,8 +818,8 @@ class Zenith:
 
                 if option in [1, 2, 3, 4, 5]:
                     option_type = (
-                        "Wrap PHRS" if option == 1 else 
-                        "Unwrap WPHRS" if option == 2 else 
+                        "Wrap PHRS" if option == 1 else
+                        "Unwrap WPHRS" if option == 2 else
                         "Random Swap" if option == 3 else
                         "Add Liquidity" if option == 4 else
                         "Run All Features"
@@ -938,19 +834,15 @@ class Zenith:
         if option == 1:
             self.print_wrap_question()
             self.print_delay_question()
-
         elif option == 2:
             self.print_unwrap_question()
             self.print_delay_question()
-
         elif option == 3:
             self.print_swap_question()
             self.print_delay_question()
-
         elif option == 4:
             self.print_liquidity_question()
             self.print_delay_question()
-
         elif option == 5:
             self.print_wrap_or_unwarp_option()
             self.print_swap_question()
@@ -964,10 +856,8 @@ class Zenith:
                 proxy_choice = int(input(f"{Fore.BLUE + Style.BRIGHT}Choose [1/2] -> {Style.RESET_ALL}").strip())
 
                 if proxy_choice in [1, 2]:
-                    proxy_type = (
-                        "With" if proxy_choice == 2 else 
-                        "Without"
-                    )
+                    # ✅ FIXED: Proxy type label was inverted in original
+                    proxy_type = "With" if proxy_choice == 1 else "Without"
                     print(f"{Fore.GREEN + Style.BRIGHT}Run {proxy_type} Proxy Selected.{Style.RESET_ALL}")
                     break
                 else:
@@ -979,7 +869,6 @@ class Zenith:
         if proxy_choice == 1:
             while True:
                 rotate_proxy = input(f"{Fore.BLUE + Style.BRIGHT}Rotate Invalid Proxy? [y/n] -> {Style.RESET_ALL}").strip()
-
                 if rotate_proxy in ["y", "n"]:
                     rotate_proxy = rotate_proxy == "y"
                     break
@@ -1007,10 +896,7 @@ class Zenith:
     async def process_check_connection(self, address: str, use_proxy: bool, rotate_proxy: bool):
         while True:
             proxy = self.get_next_proxy_for_account(address) if use_proxy else None
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}Proxy     :{Style.RESET_ALL}"
-                f"{Fore.WHITE + Style.BRIGHT} {proxy} {Style.RESET_ALL}"
-            )
+            self.log(f"{Fore.CYAN+Style.BRIGHT}Proxy     :{Style.RESET_ALL}{Fore.WHITE + Style.BRIGHT} {proxy} {Style.RESET_ALL}")
 
             is_valid = await self.check_connection(proxy)
             if not is_valid:
@@ -1018,194 +904,94 @@ class Zenith:
                     proxy = self.rotate_proxy_for_account(address)
                     await asyncio.sleep(1)
                     continue
-
                 return False
-            
             return True
         
     async def process_perform_wrapped(self, account: str, address: str, use_proxy: bool):
         tx_hash, block_number = await self.perform_wrapped(account, address, use_proxy)
         if tx_hash and block_number:
-            explorer = f"https://testnet.pharosscan.xyz/tx/{tx_hash}"
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                f"{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Block    :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {block_number} {Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Tx Hash  :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {tx_hash} {Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Explorer :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {explorer} {Style.RESET_ALL}"
-            )
+            # ✅ FIXED: Updated to Atlantic explorer
+            explorer = f"https://atlantic.pharosscan.xyz/tx/{tx_hash}"
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Block    :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {block_number} {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Tx Hash  :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {tx_hash} {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Explorer :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {explorer} {Style.RESET_ALL}")
         else:
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                f"{Fore.RED+Style.BRIGHT} Perform On-Chain Failed {Style.RESET_ALL}"
-            )
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.RED+Style.BRIGHT} Perform On-Chain Failed {Style.RESET_ALL}")
 
     async def process_perform_unwrapped(self, account: str, address: str, use_proxy: bool):
         tx_hash, block_number = await self.perform_unwrapped(account, address, use_proxy)
         if tx_hash and block_number:
-            explorer = f"https://testnet.pharosscan.xyz/tx/{tx_hash}"
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                f"{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Block    :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {block_number} {Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Tx Hash  :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {tx_hash} {Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Explorer :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {explorer} {Style.RESET_ALL}"
-            )
+            # ✅ FIXED: Updated to Atlantic explorer
+            explorer = f"https://atlantic.pharosscan.xyz/tx/{tx_hash}"
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Block    :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {block_number} {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Tx Hash  :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {tx_hash} {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Explorer :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {explorer} {Style.RESET_ALL}")
         else:
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                f"{Fore.RED+Style.BRIGHT} Perform On-Chain Failed {Style.RESET_ALL}"
-            )
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.RED+Style.BRIGHT} Perform On-Chain Failed {Style.RESET_ALL}")
 
     async def process_perform_swap(self, account: str, address: str, swap_type: str, from_token: str, to_token: str, amount_in: float, use_proxy: bool):
         tx_hash, block_number = await self.perform_swap(account, address, swap_type, from_token, to_token, amount_in, use_proxy)
         if tx_hash and block_number:
-            explorer = f"https://testnet.pharosscan.xyz/tx/{tx_hash}"
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                f"{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}                      "
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Block    :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {block_number} {Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Tx Hash  :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {tx_hash} {Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Explorer :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {explorer} {Style.RESET_ALL}"
-            )
+            # ✅ FIXED: Updated to Atlantic explorer
+            explorer = f"https://atlantic.pharosscan.xyz/tx/{tx_hash}"
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Block    :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {block_number} {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Tx Hash  :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {tx_hash} {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Explorer :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {explorer} {Style.RESET_ALL}")
         else:
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                f"{Fore.RED+Style.BRIGHT} Perform On-Chain Failed {Style.RESET_ALL}"
-            )
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.RED+Style.BRIGHT} Perform On-Chain Failed {Style.RESET_ALL}")
 
     async def process_perform_liquidity(self, account: str, address: str, token_type: str, token0: str, token1: str, amount0_desired: int, amount1_desired: int, use_proxy: bool):
         tx_hash, block_number = await self.perform_liquidity(account, address, token_type, token0, token1, amount0_desired, amount1_desired, use_proxy)
         if tx_hash and block_number:
-            explorer = f"https://testnet.pharosscan.xyz/tx/{tx_hash}"
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                f"{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}                      "
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Block    :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {block_number} {Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Tx Hash  :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {tx_hash} {Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Explorer :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {explorer} {Style.RESET_ALL}"
-            )
+            # ✅ FIXED: Updated to Atlantic explorer
+            explorer = f"https://atlantic.pharosscan.xyz/tx/{tx_hash}"
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Block    :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {block_number} {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Tx Hash  :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {tx_hash} {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Explorer :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {explorer} {Style.RESET_ALL}")
         else:
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                f"{Fore.RED+Style.BRIGHT} Perform On-Chain Failed {Style.RESET_ALL}"
-            )
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.RED+Style.BRIGHT} Perform On-Chain Failed {Style.RESET_ALL}")
 
     async def process_option_1(self, account: str, address: str, use_proxy):
         self.log(f"{Fore.CYAN+Style.BRIGHT}Wrapped   :{Style.RESET_ALL}                      ")
-
         balance = await self.get_token_balance(address, "PHRS", use_proxy)
-        self.log(
-            f"{Fore.CYAN+Style.BRIGHT}   Balance :{Style.RESET_ALL}"
-            f"{Fore.WHITE+Style.BRIGHT} {balance} PHRS {Style.RESET_ALL}"
-        )
-        self.log(
-            f"{Fore.CYAN+Style.BRIGHT}   Amount  :{Style.RESET_ALL}"
-            f"{Fore.WHITE+Style.BRIGHT} {self.wrap_amount} PHRS {Style.RESET_ALL}"
-        )
-
-        if not balance or balance <=  self.wrap_amount:
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                f"{Fore.YELLOW+Style.BRIGHT} Insufficient PHRS Token Balance {Style.RESET_ALL}"
-            )
+        self.log(f"{Fore.CYAN+Style.BRIGHT}   Balance :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {balance} PHRS {Style.RESET_ALL}")
+        self.log(f"{Fore.CYAN+Style.BRIGHT}   Amount  :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {self.wrap_amount} PHRS {Style.RESET_ALL}")
+        if not balance or balance <= self.wrap_amount:
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.YELLOW+Style.BRIGHT} Insufficient PHRS Token Balance {Style.RESET_ALL}")
             return
-        
         await self.process_perform_wrapped(account, address, use_proxy)
 
     async def process_option_2(self, account: str, address: str, use_proxy):
         self.log(f"{Fore.CYAN+Style.BRIGHT}Unwrapped :{Style.RESET_ALL}                      ")
-
         balance = await self.get_token_balance(address, self.WPHRS_CONTRACT_ADDRESS, use_proxy)
-        self.log(
-            f"{Fore.CYAN+Style.BRIGHT}   Balance  :{Style.RESET_ALL}"
-            f"{Fore.WHITE+Style.BRIGHT} {balance} WPHRS {Style.RESET_ALL}"
-        )
-        self.log(
-            f"{Fore.CYAN+Style.BRIGHT}   Amount   :{Style.RESET_ALL}"
-            f"{Fore.WHITE+Style.BRIGHT} {self.wrap_amount} WPHRS {Style.RESET_ALL}"
-        )
-
-        if not balance or balance <=  self.wrap_amount:
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                f"{Fore.YELLOW+Style.BRIGHT} Insufficient WPHRS Token Balance {Style.RESET_ALL}"
-            )
+        self.log(f"{Fore.CYAN+Style.BRIGHT}   Balance  :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {balance} WPHRS {Style.RESET_ALL}")
+        self.log(f"{Fore.CYAN+Style.BRIGHT}   Amount   :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {self.wrap_amount} WPHRS {Style.RESET_ALL}")
+        if not balance or balance <= self.wrap_amount:
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.YELLOW+Style.BRIGHT} Insufficient WPHRS Token Balance {Style.RESET_ALL}")
             return
-        
         await self.process_perform_unwrapped(account, address, use_proxy)
 
     async def process_option_3(self, account: str, address: str, use_proxy):
         self.log(f"{Fore.CYAN+Style.BRIGHT}Swap      :{Style.RESET_ALL}                      ")
         for i in range(self.swap_count):
-            self.log(
-                f"{Fore.MAGENTA+Style.BRIGHT} ● {Style.RESET_ALL}"
-                f"{Fore.GREEN+Style.BRIGHT}Swap{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {i+1} / {self.swap_count} {Style.RESET_ALL}                           "
-            )
-
+            self.log(f"{Fore.MAGENTA+Style.BRIGHT} ● {Style.RESET_ALL}{Fore.GREEN+Style.BRIGHT}Swap{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {i+1} / {self.swap_count} {Style.RESET_ALL}")
             swap_type, from_ticker, to_ticker, from_token, to_token, amount_in = self.generate_swap_option()
-
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Option   :{Style.RESET_ALL}"
-                f"{Fore.BLUE+Style.BRIGHT} {from_ticker} to {to_ticker} {Style.RESET_ALL}"
-            )
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Option   :{Style.RESET_ALL}{Fore.BLUE+Style.BRIGHT} {from_ticker} to {to_ticker} {Style.RESET_ALL}")
 
             if swap_type != "native to erc20":
                 balance = await self.get_token_balance(address, from_token, use_proxy)
             else:
                 balance = await self.get_token_balance(address, "PHRS", use_proxy)
 
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Balance  :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {balance} {from_ticker} {Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Amount   :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {amount_in} {from_ticker} {Style.RESET_ALL}"
-            )
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Balance  :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {balance} {from_ticker} {Style.RESET_ALL}")
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Amount   :{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {amount_in} {from_ticker} {Style.RESET_ALL}")
 
-            if not balance or balance <=  amount_in:
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                    f"{Fore.YELLOW+Style.BRIGHT} Insufficient {from_ticker} Token Balance {Style.RESET_ALL}"
-                )
+            if not balance or balance <= amount_in:
+                self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.YELLOW+Style.BRIGHT} Insufficient {from_ticker} Token Balance {Style.RESET_ALL}")
                 continue
             
             await self.process_perform_swap(account, address, swap_type, from_token, to_token, amount_in, use_proxy)
@@ -1214,75 +1000,42 @@ class Zenith:
     async def process_option_4(self, account: str, address: str, use_proxy):
         self.log(f"{Fore.CYAN+Style.BRIGHT}Liquidity :{Style.RESET_ALL}                      ")
         for i in range(self.liquidity_count):
-            self.log(
-                f"{Fore.MAGENTA+Style.BRIGHT} ● {Style.RESET_ALL}"
-                f"{Fore.GREEN+Style.BRIGHT}Liquidity{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {i+1} / {self.liquidity_count} {Style.RESET_ALL}                           "
-            )
-
+            self.log(f"{Fore.MAGENTA+Style.BRIGHT} ● {Style.RESET_ALL}{Fore.GREEN+Style.BRIGHT}Liquidity{Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT} {i+1} / {self.liquidity_count} {Style.RESET_ALL}")
             liquidity_option, token_type, ticker0, ticker1, token0, token1, amount0_desired, decimals0, decimals1 = self.generate_liquidity_option()
-
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}   Option   :{Style.RESET_ALL}"
-                f"{Fore.BLUE+Style.BRIGHT} {liquidity_option} {Style.RESET_ALL}"
-            )
+            self.log(f"{Fore.CYAN+Style.BRIGHT}   Option   :{Style.RESET_ALL}{Fore.BLUE+Style.BRIGHT} {liquidity_option} {Style.RESET_ALL}")
 
             if token_type == "native_erc20":
                 balance0 = await self.get_token_balance(address, "PHRS", use_proxy)
                 balance1 = await self.get_token_balance(address, token1, use_proxy)
-
             elif token_type == "erc20_native":
                 balance0 = await self.get_token_balance(address, token0, use_proxy)
                 balance1 = await self.get_token_balance(address, "PHRS", use_proxy)
-
             else:
                 balance0 = await self.get_token_balance(address, token0, use_proxy)
                 balance1 = await self.get_token_balance(address, token1, use_proxy)
 
             self.log(f"{Fore.CYAN+Style.BRIGHT}   Balance  :{Style.RESET_ALL}")
-            self.log(
-                f"{Fore.MAGENTA+Style.BRIGHT}      ● {Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT}{balance0} {ticker0}{Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.MAGENTA+Style.BRIGHT}      ● {Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT}{balance1} {ticker1}{Style.RESET_ALL}"
-            )
+            self.log(f"{Fore.MAGENTA+Style.BRIGHT}      ● {Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT}{balance0} {ticker0}{Style.RESET_ALL}")
+            self.log(f"{Fore.MAGENTA+Style.BRIGHT}      ● {Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT}{balance1} {ticker1}{Style.RESET_ALL}")
 
             path = bytes.fromhex(token0[2:]) + (500).to_bytes(3, "big") + bytes.fromhex(token1[2:])
             amount1_desired = await self.get_amount_out_min(address, path, amount0_desired, use_proxy)
             if not amount1_desired:
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                    f"{Fore.YELLOW+Style.BRIGHT} Fetch {ticker0} per {ticker1} Current Price Failed {Style.RESET_ALL}"
-                )
+                self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.YELLOW+Style.BRIGHT} Fetch {ticker0} per {ticker1} Current Price Failed {Style.RESET_ALL}")
                 continue
 
             amount0 = amount0_desired / (10 ** decimals0)
             amount1 = amount1_desired / (10 ** decimals1)
 
             self.log(f"{Fore.CYAN+Style.BRIGHT}   Amount   :{Style.RESET_ALL}")
-            self.log(
-                f"{Fore.MAGENTA+Style.BRIGHT}      ● {Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT}{amount0} {ticker0}{Style.RESET_ALL}"
-            )
-            self.log(
-                f"{Fore.MAGENTA+Style.BRIGHT}      ● {Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT}{amount1} {ticker1}{Style.RESET_ALL}"
-            )
+            self.log(f"{Fore.MAGENTA+Style.BRIGHT}      ● {Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT}{amount0} {ticker0}{Style.RESET_ALL}")
+            self.log(f"{Fore.MAGENTA+Style.BRIGHT}      ● {Style.RESET_ALL}{Fore.WHITE+Style.BRIGHT}{amount1} {ticker1}{Style.RESET_ALL}")
 
-            if not balance0 or balance0 <=  amount0:
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                    f"{Fore.YELLOW+Style.BRIGHT} Insufficient {ticker0} Token Balance {Style.RESET_ALL}"
-                )
+            if not balance0 or balance0 <= amount0:
+                self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.YELLOW+Style.BRIGHT} Insufficient {ticker0} Token Balance {Style.RESET_ALL}")
                 continue
-            
-            if not balance1 or balance1 <=  amount1:
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
-                    f"{Fore.YELLOW+Style.BRIGHT} Insufficient {ticker1} Token Balance {Style.RESET_ALL}"
-                )
+            if not balance1 or balance1 <= amount1:
+                self.log(f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}{Fore.YELLOW+Style.BRIGHT} Insufficient {ticker1} Token Balance {Style.RESET_ALL}")
                 continue
             
             await self.process_perform_liquidity(account, address, token_type, token0, token1, amount0_desired, amount1_desired, use_proxy)
@@ -1305,49 +1058,26 @@ class Zenith:
             self.used_nonce[address] = web3.eth.get_transaction_count(address, "pending")
             
             if option == 1:
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}Option    :{Style.RESET_ALL}"
-                    f"{Fore.BLUE+Style.BRIGHT} Wrap PHRS {Style.RESET_ALL}"
-                )
+                self.log(f"{Fore.CYAN+Style.BRIGHT}Option    :{Style.RESET_ALL}{Fore.BLUE+Style.BRIGHT} Wrap PHRS {Style.RESET_ALL}")
                 await self.process_option_1(account, address, use_proxy)
-
             elif option == 2:
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}Option    :{Style.RESET_ALL}"
-                    f"{Fore.BLUE+Style.BRIGHT} Unwrap WPHRS {Style.RESET_ALL}"
-                )
+                self.log(f"{Fore.CYAN+Style.BRIGHT}Option    :{Style.RESET_ALL}{Fore.BLUE+Style.BRIGHT} Unwrap WPHRS {Style.RESET_ALL}")
                 await self.process_option_2(account, address, use_proxy)
-
             elif option == 3:
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}Option    :{Style.RESET_ALL}"
-                    f"{Fore.BLUE+Style.BRIGHT} Random Swap {Style.RESET_ALL}"
-                )
+                self.log(f"{Fore.CYAN+Style.BRIGHT}Option    :{Style.RESET_ALL}{Fore.BLUE+Style.BRIGHT} Random Swap {Style.RESET_ALL}")
                 await self.process_option_3(account, address, use_proxy)
-
             elif option == 4:
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}Option    :{Style.RESET_ALL}"
-                    f"{Fore.BLUE+Style.BRIGHT} Add Liquidity {Style.RESET_ALL}"
-                )
+                self.log(f"{Fore.CYAN+Style.BRIGHT}Option    :{Style.RESET_ALL}{Fore.BLUE+Style.BRIGHT} Add Liquidity {Style.RESET_ALL}")
                 await self.process_option_4(account, address, use_proxy)
-
             elif option == 5:
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}Option    :{Style.RESET_ALL}"
-                    f"{Fore.BLUE+Style.BRIGHT} Run All Features {Style.RESET_ALL}"
-                )
-
+                self.log(f"{Fore.CYAN+Style.BRIGHT}Option    :{Style.RESET_ALL}{Fore.BLUE+Style.BRIGHT} Run All Features {Style.RESET_ALL}")
                 if self.wrap_option == 1:
                     await self.process_option_1(account, address, use_proxy)
                 elif self.wrap_option == 2:
                     await self.process_option_2(account, address, use_proxy)
-
                 await asyncio.sleep(5)
-
                 await self.process_option_3(account, address, use_proxy)
                 await asyncio.sleep(5)
-
                 await self.process_option_4(account, address, use_proxy)
                 await asyncio.sleep(5)
 
@@ -1357,7 +1087,6 @@ class Zenith:
                 accounts = [line.strip() for line in file if line.strip()]
 
             option, proxy_choice, rotate_proxy = self.print_question()
-
             use_proxy = True if proxy_choice == 1 else False
 
             while True:
@@ -1375,20 +1104,14 @@ class Zenith:
                 for account in accounts:
                     if account:
                         address = self.generate_address(account)
-
                         self.log(
                             f"{Fore.CYAN + Style.BRIGHT}{separator}[{Style.RESET_ALL}"
                             f"{Fore.WHITE + Style.BRIGHT} {self.mask_account(address)} {Style.RESET_ALL}"
                             f"{Fore.CYAN + Style.BRIGHT}]{separator}{Style.RESET_ALL}"
                         )
-
                         if not address:
-                            self.log(
-                                f"{Fore.CYAN + Style.BRIGHT}Status    :{Style.RESET_ALL}"
-                                f"{Fore.RED + Style.BRIGHT} Invalid Private Key or Library Version Not Supported {Style.RESET_ALL}"
-                            )
+                            self.log(f"{Fore.CYAN + Style.BRIGHT}Status    :{Style.RESET_ALL}{Fore.RED + Style.BRIGHT} Invalid Private Key or Library Version Not Supported {Style.RESET_ALL}")
                             continue
-
                         await self.process_accounts(account, address, option, use_proxy, rotate_proxy)
                         await asyncio.sleep(3)
 
@@ -1422,5 +1145,5 @@ if __name__ == "__main__":
         print(
             f"{Fore.CYAN + Style.BRIGHT}[ {datetime.now().astimezone(wib).strftime('%x %X %Z')} ]{Style.RESET_ALL}"
             f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-            f"{Fore.RED + Style.BRIGHT}[ EXIT ] Zenith Swap - BOT{Style.RESET_ALL}                                       "                              
+            f"{Fore.RED + Style.BRIGHT}[ EXIT ] Zenith Swap - BOT{Style.RESET_ALL}                                       "
         )
