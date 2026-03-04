@@ -13,11 +13,16 @@ wib = pytz.timezone('Asia/Jakarta')
 class Faroswap:
     def __init__(self) -> None:
         self.BASE_API = "https://api.dodoex.io/route-service/v2/widget/getdodoroute"
-        self.RPC_URL = "https://testnet.dplabs-internal.com/"
+        # ✅ FIXED: Updated to Atlantic testnet RPC
+        self.RPC_URL = "https://atlantic.dplabs-internal.com"
         self.PHRS_CONTRACT_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
-        self.WPHRS_CONTRACT_ADDRESS = "0x3019B247381c850ab53Dc0EE53bCe7A07Ea9155f"
-        self.USDC_CONTRACT_ADDRESS = "0x72df0bcd7276f2dFbAc900D1CE63c272C4BCcCED"
-        self.USDT_CONTRACT_ADDRESS = "0xD4071393f8716661958F766DF660033b3d35fD29"
+        # ✅ FIXED: Updated to Atlantic testnet contract addresses
+        self.WPHRS_CONTRACT_ADDRESS = "0x838800b758277CC111B2d48Ab01e5E164f8E9471"
+        self.USDC_CONTRACT_ADDRESS = "0xE0BE08c77f415F577A1B3A9aD7a1Df1479564ec8"
+        self.USDT_CONTRACT_ADDRESS = "0xE7E84B8B4f39C507499c40B4ac199B050e2882d5"
+        # ⚠️ TODO: Verify these DODO contract addresses on Atlantic explorer
+        # How to verify: do one manual swap on faroswap.xyz, check tx on atlantic.pharosscan.xyz
+        # The "To" address in the tx = DODO_ROUTER_ADDRESS
         self.DODO_APPROVE_ADDRESS = "0x73CAfc894dBfC181398264934f7Be4e482fc9d40"
         self.DODO_ROUTER_ADDRESS = "0x3541423f25A1Ca5C98fdBCf478405d3f0aaD1164"
         self.DODO_PROXY02_ADDRESS = "0x4b177AdEd3b8bD1D5D747F91B9E853513838Cd49"
@@ -82,9 +87,9 @@ class Faroswap:
         print(Fore.LIGHTGREEN_EX + Style.BRIGHT + "\n" + "═" * 60)
         print(Fore.GREEN + Style.BRIGHT + "    ⚡ Pharos Automation BOT ⚡")
         print(Fore.CYAN + Style.BRIGHT + "    ────────────────────────────────")
-        print(Fore.YELLOW + Style.BRIGHT + "    🧠 Project    : Forswap - Automation Bot")
+        print(Fore.YELLOW + Style.BRIGHT + "    🧠 Project    : FaroSwap - Automation Bot")
         print(Fore.YELLOW + Style.BRIGHT + "    🧑‍💻 Author     : YetiDAO")
-        print(Fore.YELLOW + Style.BRIGHT + "    🌐 Status     : Running & Monitering...")
+        print(Fore.YELLOW + Style.BRIGHT + "    🌐 Status     : Running & Monitoring...")
         print(Fore.CYAN + Style.BRIGHT + "    ────────────────────────────────")
         print(Fore.MAGENTA + Style.BRIGHT + "    🧬 Powered by Cryptodai3 × YetiDAO | Buddy v1.2 🚀")
         print(Fore.LIGHTGREEN_EX + Style.BRIGHT + "═" * 60 + "\n")
@@ -207,9 +212,6 @@ class Faroswap:
         tickers = list(token_data.keys())
 
         while True:
-            # from_ticker = random.choice(tickers)
-            # to_ticker = random.choice(tickers)
-
             from_ticker = random.choice(["PHRS", "WPHRS"])
             to_ticker = random.choice(["USDC", "USDT"])
 
@@ -420,7 +422,8 @@ class Faroswap:
                 block_number = receipt.blockNumber
                 self.used_nonce[address] += 1
 
-                explorer = f"https://testnet.pharosscan.xyz/tx/{tx_hash}"
+                # ✅ FIXED: Updated to Atlantic explorer
+                explorer = f"https://atlantic.pharosscan.xyz/tx/{tx_hash}"
                 
                 self.log(
                     f"{Fore.CYAN+Style.BRIGHT}   Approve  :{Style.RESET_ALL}"
@@ -759,7 +762,7 @@ class Faroswap:
 
                 if proxy_choice in [1, 2]:
                     proxy_type = (
-                        "With" if proxy_choice == 2 else 
+                        "With" if proxy_choice == 1 else
                         "Without"
                     )
                     print(f"{Fore.GREEN + Style.BRIGHT}Run {proxy_type} Proxy Selected.{Style.RESET_ALL}")
@@ -812,7 +815,8 @@ class Faroswap:
 
         deadline = int(time.time()) + 600
 
-        url = f"{self.BASE_API}?chainId=688688&deadLine={deadline}&apikey=a37546505892e1a952&slippage=1&source=dodoV2AndMixWasm&toTokenAddress={to_token}&fromTokenAddress={from_token}&userAddr={address}&estimateGas=true&fromAmount={amount_in}"
+        # ✅ FIXED: Updated chainId to Atlantic testnet 688689
+        url = f"{self.BASE_API}?chainId=688689&deadLine={deadline}&apikey=a37546505892e1a952&slippage=1&source=dodoV2AndMixWasm&toTokenAddress={to_token}&fromTokenAddress={from_token}&userAddr={address}&estimateGas=true&fromAmount={amount_in}"
         
         proxy_url = self.get_next_proxy_for_account(address) if use_proxy else None
         connector, proxy, proxy_auth = self.build_proxy_config(proxy_url)
@@ -855,7 +859,8 @@ class Faroswap:
     async def process_perform_wrapped(self, account: str, address: str, use_proxy: bool):
         tx_hash, block_number = await self.perform_wrapped(account, address, use_proxy)
         if tx_hash and block_number:
-            explorer = f"https://testnet.pharosscan.xyz/tx/{tx_hash}"
+            # ✅ FIXED: Updated to Atlantic explorer
+            explorer = f"https://atlantic.pharosscan.xyz/tx/{tx_hash}"
             self.log(
                 f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
                 f"{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}"
@@ -881,7 +886,8 @@ class Faroswap:
     async def process_perform_unwrapped(self, account: str, address: str, use_proxy: bool):
         tx_hash, block_number = await self.perform_unwrapped(account, address, use_proxy)
         if tx_hash and block_number:
-            explorer = f"https://testnet.pharosscan.xyz/tx/{tx_hash}"
+            # ✅ FIXED: Updated to Atlantic explorer
+            explorer = f"https://atlantic.pharosscan.xyz/tx/{tx_hash}"
             self.log(
                 f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
                 f"{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}"
@@ -907,7 +913,8 @@ class Faroswap:
     async def process_perform_swap(self, account: str, address: str, from_token: str, to_token: str, amount_in: float, use_proxy: bool):
         tx_hash, block_number = await self.perform_swap(account, address, from_token, to_token, amount_in, use_proxy)
         if tx_hash and block_number:
-            explorer = f"https://testnet.pharosscan.xyz/tx/{tx_hash}"
+            # ✅ FIXED: Updated to Atlantic explorer
+            explorer = f"https://atlantic.pharosscan.xyz/tx/{tx_hash}"
             self.log(
                 f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
                 f"{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}                      "
@@ -933,7 +940,8 @@ class Faroswap:
     async def process_perform_liquidity(self, account: str, address: str, pair_address: str, amount: float, use_proxy: bool):
         tx_hash, block_number = await self.perform_liquidity(account, address, pair_address, amount, use_proxy)
         if tx_hash and block_number:
-            explorer = f"https://testnet.pharosscan.xyz/tx/{tx_hash}"
+            # ✅ FIXED: Updated to Atlantic explorer
+            explorer = f"https://atlantic.pharosscan.xyz/tx/{tx_hash}"
             self.log(
                 f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
                 f"{Fore.GREEN+Style.BRIGHT} Success {Style.RESET_ALL}                      "
@@ -969,7 +977,7 @@ class Faroswap:
             f"{Fore.WHITE+Style.BRIGHT} {self.wrap_amount} PHRS {Style.RESET_ALL}"
         )
 
-        if not balance or balance <=  self.wrap_amount:
+        if not balance or balance <= self.wrap_amount:
             self.log(
                 f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
                 f"{Fore.YELLOW+Style.BRIGHT} Insufficient PHRS Token Balance {Style.RESET_ALL}"
@@ -991,7 +999,7 @@ class Faroswap:
             f"{Fore.WHITE+Style.BRIGHT} {self.wrap_amount} WPHRS {Style.RESET_ALL}"
         )
 
-        if not balance or balance <=  self.wrap_amount:
+        if not balance or balance <= self.wrap_amount:
             self.log(
                 f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
                 f"{Fore.YELLOW+Style.BRIGHT} Insufficient WPHRS Token Balance {Style.RESET_ALL}"
@@ -1027,7 +1035,7 @@ class Faroswap:
                 f"{Fore.WHITE+Style.BRIGHT} {amount_in} {from_ticker} {Style.RESET_ALL}"
             )
 
-            if not balance or balance <=  amount_in:
+            if not balance or balance <= amount_in:
                 self.log(
                     f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
                     f"{Fore.YELLOW+Style.BRIGHT} Insufficient {from_ticker} Token Balance {Style.RESET_ALL}"
@@ -1075,14 +1083,14 @@ class Faroswap:
                 f"{Fore.WHITE+Style.BRIGHT}{self.liquidity_amount} {quote_ticker}{Style.RESET_ALL}"
             )
 
-            if not balance0 or balance0 <=  self.liquidity_amount:
+            if not balance0 or balance0 <= self.liquidity_amount:
                 self.log(
                     f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
                     f"{Fore.YELLOW+Style.BRIGHT} Insufficient {base_ticker} Token Balance {Style.RESET_ALL}"
                 )
                 continue
             
-            if not balance1 or balance1 <=  self.liquidity_amount:
+            if not balance1 or balance1 <= self.liquidity_amount:
                 self.log(
                     f"{Fore.CYAN+Style.BRIGHT}   Status   :{Style.RESET_ALL}"
                     f"{Fore.YELLOW+Style.BRIGHT} Insufficient {quote_ticker} Token Balance {Style.RESET_ALL}"
